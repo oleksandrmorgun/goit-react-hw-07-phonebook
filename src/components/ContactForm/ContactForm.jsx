@@ -1,92 +1,88 @@
-import { useState } from 'react';
-import { nanoid } from '@reduxjs/toolkit';
-import { Form, Label, Button, Input } from './ContactForm.styled';
-import { ReactComponent as AddIcon } from '../icons/add.svg';
-import { useSelector, useDispatch } from 'react-redux';
-import { selectContacts } from 'redux/selectors';
-import { addContacts } from '../../redux/operations';
+import { useEffect, useState } from 'react';
+import css from './ContactForm.module.css';
+import { useDispatch, useSelector } from 'react-redux';
+import { addContactsThunk, getContactsThunk } from 'redux/contactsThunk';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-//Генерація унікальних ідентифікаторів для полів форми.
-const nameInputId = nanoid();
-const numberInputId = nanoid();
-
-const ContactForm = () => {
+export const ContactForm = () => {
+  const dispatch = useDispatch();
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
 
-  const contacts = useSelector(selectContacts);
-  const dispatch = useDispatch();
-
-  // Обробка відправлення форми.
-  const handleSubmit = event => {
-    event.preventDefault();
-
-    const isInContacts = contacts.some(
-      contact => contact.name.toLowerCase().trim() === name.toLowerCase().trim()
-    );
-
-    // Перевіряє, чи існує контакт із таким самим ім'ям у списку контактів. Якщо контакт вже існує, виводиться попередження.
-    if (isInContacts) {
-      alert(`${name} is already in contacts`);
-      return;
-    }
-
-    // Виклик функції onSubmit із батьківського компонента з передачею об'єкта контакту.
-    dispatch(addContacts({ name, number }));
+  useEffect(() => {
+    dispatch(getContactsThunk());
+  }, [dispatch]);
+  const handleChange = evt => {
+    const { name, value } = evt.target;
+    name === 'name' ? setName(value) : setNumber(value);
+  };
+  const reset = () => {
     setName('');
     setNumber('');
   };
-
-  // Обробка зміни значень полів форми.
-  const handleChange = event => {
-    const { name, value } = event.target;
-
-    switch (name) {
-      case 'name':
-        setName(value);
-        break;
-      case 'number':
-        setNumber(value);
-        break;
-      default:
-        return;
-    }
-  };
-
+  const contacts = useSelector(state => state.contacts.items);
   return (
-    <Form onSubmit={handleSubmit}>
-      <Label htmlFor={nameInputId}>
-        Name
-        <Input
-          type="text"
-          name="name"
+    <form
+      className={css.form}
+      onSubmit={e => {
+        const notifly = () => toast(`${name} is alredy in contacts`);
+        const contact = {
+          name: name,
+          phone: number,
+        };
+        e.preventDefault();
+        if (
+          contacts.some(
+            value => value.name.toLocaleLowerCase() === name.toLocaleLowerCase()
+          )
+        ) {
+          notifly();
+        } else {
+          dispatch(addContactsThunk(contact));
+          reset();
+        }
+      }}
+    >
+      <div>
+        <label className={css.label}>
+          <span>Name</span>
+        </label>
+        <input
+          className={css.input}
           value={name}
           onChange={handleChange}
+          type="text"
+          name="name"
           pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
           title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
           required
         />
-      </Label>
 
-      <Label htmlFor={numberInputId}>
-        Number
-        <Input
-          type="tel"
-          name="number"
+        <label>
+          <span>Number</span>
+        </label>
+        <input
+          className={css.input}
           value={number}
           onChange={handleChange}
+          type="tel"
+          name="number"
           pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
           title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
           required
         />
-      </Label>
-
-      <Button type="submit">
-        <AddIcon fill="#f08080" width="25" height="25" />
-        Add contact
-      </Button>
-    </Form>
+        <ToastContainer
+          position="top-center"
+          autoClose={3000}
+          hideProgressBar={false}
+          pauseOnHover
+          theme="dark"
+        />
+        <button className={css.btn} type="submit">
+          Add contact
+        </button>
+      </div>
+    </form>
   );
 };
-
-export default ContactForm;

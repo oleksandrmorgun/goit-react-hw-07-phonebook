@@ -1,34 +1,30 @@
-import React from 'react';
-import { List, Item, Button } from './ContactList.styled';
-import { ReactComponent as DeleteIcon } from '../icons/delete.svg';
-import { useSelector, useDispatch } from 'react-redux';
-import { selectVisibleContacts } from 'redux/selectors';
-import { deleteContacts } from '../../redux/operations';
+import PropTypes from 'prop-types';
+import css from './ContactList.module.css';
+import { useDispatch } from 'react-redux';
+import { delContactsThunk } from 'redux/contactsThunk';
 
-// Компонент списку контактів
-const ContactList = () => {
-  const contacts = useSelector(selectVisibleContacts);
+export const ContactList = ({ listContact }) => {
   const dispatch = useDispatch();
-  return (
-    <List>
-      {contacts.map(contact => (
-        <Item key={contact.id}>
-          {contact.name + ' : ' + contact.number}
-          {
-            // Кнопка видалення контакту
-            <Button
-              type="button"
-              name="delete"
-              onClick={() => dispatch(deleteContacts(contact.id))}
-            >
-              <DeleteIcon fill="#000000" width="20" height="20" />
-              delete
-            </Button>
-          }
-        </Item>
-      ))}
-    </List>
-  );
+  return listContact.map(cont => {
+    return (
+      <p key={cont.id} className={css.listItem}>
+        <span className={css.phone}>
+          {cont.name}: {cont.phone}
+        </span>
+        <button
+          className={css.btn}
+          type="button"
+          onClick={() => {
+            dispatch(delContactsThunk(cont.id));
+          }}
+        >
+          Delete
+        </button>
+      </p>
+    );
+  });
 };
 
-export default ContactList;
+ContactList.propTypes = {
+  listContact: PropTypes.array.isRequired,
+};

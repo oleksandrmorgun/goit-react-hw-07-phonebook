@@ -1,40 +1,26 @@
-import { useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { selectContacts } from 'redux/selectors';
-import { fetchContacts } from '../../redux/operations';
-import { Container, Title, SubTitle, Wrapper } from './App.styled';
-import ContactForm from '../ContactForm/ContactForm';
-import ContactList from '../ContactList/ContactList';
-import Filter from '../Filter/Filter';
+import { ContactList } from '../ContactList/ContactList';
+import { Filter } from '../Filter/Filter';
+import { ContactForm } from '../ContactForm/ContactForm';
+import css from './App.module.css';
+import { useSelector } from 'react-redux';
 
-const App = () => {
-  // Використання селектора selectContacts для отримання списку контактів з Redux-сховища
-  const contacts = useSelector(selectContacts);
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    // Запуск асинхронної Thunk-дії fetchContacts при монтуванні компонента
-    dispatch(fetchContacts());
-  }, [dispatch]);
+export const App = () => {
+  const contacts = useSelector(state => state.contacts.items);
+  const filtered = useSelector(state => state.filter);
+  const filterContact = e => {
+    const filteredContacts = contacts.filter(contact =>
+      contact.name.toLowerCase().includes(filtered.toLowerCase())
+    );
+    return filteredContacts;
+  };
 
   return (
-    <Container>
-      <Title>Phonebook</Title>
+    <div className={css.container}>
+      <h1>Phonebook</h1>
       <ContactForm />
-      <SubTitle>Contacts</SubTitle>
-      {contacts.length > 0 ? (
-        // Якщо є контакти, показується компонент фільтрації
-        <Filter />
-      ) : (
-        // Якщо немає контактів, виводиться повідомлення про відсутність контактів
-        <Wrapper>Your phonebook is empty. Add first contact!</Wrapper>
-      )}
-      {contacts.length > 0 && (
-        // Якщо є контакти, показується компонент списку контактів
-        <ContactList />
-      )}
-    </Container>
+      <h2>Contacts</h2>
+      <Filter />
+      <ContactList listContact={filterContact()} />
+    </div>
   );
 };
-
-export default App;
